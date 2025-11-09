@@ -7,6 +7,7 @@ mod uniforms;
 mod camera;
 mod shaders;
 mod geometry;
+mod celestial;
 
 use minifb::{Key, Window, WindowOptions};
 use nalgebra_glm::Vec3;
@@ -19,6 +20,7 @@ use uniforms::{Uniforms, create_viewport_matrix, create_projection_matrix, creat
 use geometry::create_cube;
 use pipeline::triangle_3d;
 use vertex::Vertex;
+use celestial::Ship;
 
 const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
@@ -39,12 +41,20 @@ fn main() {
     window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
 
     let camera = Camera::new(
-        Vec3::new(0.0, 0.0, -5.0),
+        Vec3::new(0.0, 0.0, -10.0),  // Camera moved further back
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(0.0, 1.0, 0.0),
     );
 
-    let cube_vertices = create_cube();
+    let _cube_vertices = create_cube();
+
+    let mut ship = Ship::new("assets/models/ship.obj")
+        .unwrap_or_else(|e| {
+            panic!("Failed to load ship model: {}", e);
+        });
+
+    ship.position = Vec3::new(0.0, 0.0, 0.0);
+    ship.scale = 0.05;  // Much smaller scale
 
     let mut uniforms = Uniforms::new();
     uniforms.projection_matrix = create_projection_matrix(
@@ -62,20 +72,19 @@ fn main() {
         let elapsed = start_time.elapsed().as_secs_f32();
         uniforms.time = elapsed;
 
-        uniforms.model_matrix = create_model_matrix(
-            Vec3::new(0.0, 0.0, 0.0),
-            1.0,
-            Vec3::new(elapsed * 0.5, elapsed * 0.3, 0.0),
-        );
+        ship.rotation.y = elapsed * 0.5;
+        ship.rotation.x = elapsed * 0.3;
+
+        uniforms.model_matrix = ship.get_model_matrix();
 
         framebuffer.clear();
 
-        for i in (0..cube_vertices.len()).step_by(3) {
-            if i + 2 < cube_vertices.len() {
+        for i in (0..ship.mesh.vertices.len()).step_by(3) {
+            if i + 2 < ship.mesh.vertices.len() {
                 triangle_3d(
-                    &cube_vertices[i],
-                    &cube_vertices[i + 1],
-                    &cube_vertices[i + 2],
+                    &ship.mesh.vertices[i],
+                    &ship.mesh.vertices[i + 1],
+                    &ship.mesh.vertices[i + 2],
                     &uniforms,
                     &mut framebuffer,
                 );
