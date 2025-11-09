@@ -1,0 +1,13 @@
+[package]
+name = "cg-space-travel"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+minifb = "0.25"
+nalgebra-glm = "0.18"
+image = "0.24"
+tobj = "4.0"
+noise = "0.9"
+rand = "0.8"
+once_cell = "1.19"
