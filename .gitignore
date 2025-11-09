@@ -29,5 +29,3 @@ Cargo.lock
 # OS files
 .DS_Store
 
-# Planning documents (don't commit to git)
-*.md
