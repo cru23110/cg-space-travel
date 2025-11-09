@@ -5,7 +5,6 @@ use crate::fragment::Fragment;
 use crate::uniforms::Uniforms;
 use crate::shaders::vertex_shader::vertex_shader;
 use crate::shaders::fragment_shader::fragment_shader;
-use nalgebra_glm::Vec3;
 
 fn edge_function(a: &Vertex2D, b: &Vertex2D, c: &Vertex2D) -> f32 {
     (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)
@@ -109,7 +108,7 @@ pub fn triangle_3d(v1: &Vertex, v2: &Vertex, v3: &Vertex, uniforms: &Uniforms, f
                 fragment.color = color;
                 fragment.normal = normal;
 
-                let shaded_color = fragment_shader(&fragment);
+                let shaded_color = fragment_shader(&fragment, uniforms);
                 framebuffer.point_with_depth(x, y, depth, &shaded_color);
             }
         }

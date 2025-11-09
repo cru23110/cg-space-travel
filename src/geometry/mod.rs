@@ -1,10 +1,12 @@
 pub mod obj_loader;
+pub mod sphere;
 
 use crate::vertex::Vertex;
 use crate::color::Color;
 use nalgebra_glm::Vec3;
 
 pub use obj_loader::{Mesh, load_obj};
+pub use sphere::create_sphere;
 
 pub fn create_cube() -> Vec<Vertex> {
     let vertices = vec![

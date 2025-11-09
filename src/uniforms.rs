@@ -1,4 +1,5 @@
 use nalgebra_glm::{Mat4, Vec3};
+use crate::celestial::PlanetShader;
 
 pub struct Uniforms {
     pub model_matrix: Mat4,
@@ -6,6 +7,7 @@ pub struct Uniforms {
     pub projection_matrix: Mat4,
     pub viewport_matrix: Mat4,
     pub time: f32,
+    pub planet_shader: Option<PlanetShader>,
 }
 
 impl Uniforms {
@@ -16,6 +18,7 @@ impl Uniforms {
             projection_matrix: Mat4::identity(),
             viewport_matrix: Mat4::identity(),
             time: 0.0,
+            planet_shader: None,
         }
     }
 }
