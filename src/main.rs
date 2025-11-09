@@ -11,6 +11,7 @@ mod celestial;
 mod warp;
 mod skybox;
 mod phase_manager;
+mod obstacles;
 
 use minifb::{Key, Window, WindowOptions};
 use nalgebra_glm::Vec3;
@@ -25,6 +26,8 @@ use celestial::Ship;
 use warp::WarpEffect;
 use skybox::Skybox;
 use phase_manager::PhaseManager;
+use obstacles::ObstacleManager;
+use geometry::create_cube;
 
 const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
@@ -61,6 +64,10 @@ fn main() {
     let mut warp_effect = WarpEffect::new();
 
     let skybox = Skybox::new(1000);
+
+    let mut obstacle_manager = ObstacleManager::new();
+
+    let cube_mesh = create_cube();
 
     let mut uniforms = Uniforms::new();
     uniforms.projection_matrix = create_projection_matrix(
@@ -131,6 +138,12 @@ fn main() {
 
         ship.update_physics(0.016, warp_effect.intensity);
 
+        obstacle_manager.update(ship.position, ship_forward, 0.016);
+
+        if obstacle_manager.check_collisions(ship.position) {
+            println!("Collision detected!");
+        }
+
         if window.is_key_down(Key::Space) {
             phase_manager.next_phase();
         }
@@ -143,6 +156,27 @@ fn main() {
         framebuffer.clear();
 
         skybox.render(&mut framebuffer, &uniforms);
+
+        for obstacle in &obstacle_manager.obstacles {
+            use uniforms::create_model_matrix;
+            uniforms.model_matrix = create_model_matrix(
+                obstacle.position,
+                obstacle.size,
+                Vec3::new(0.0, 0.0, 0.0)
+            );
+            uniforms.is_star = false;
+            uniforms.planet_shader = None;
+
+            for i in (0..cube_mesh.len()).step_by(3) {
+                if i + 2 < cube_mesh.len() {
+                    let v1 = &cube_mesh[i];
+                    let v2 = &cube_mesh[i + 1];
+                    let v3 = &cube_mesh[i + 2];
+
+                    triangle_3d(v1, v2, v3, &uniforms, &mut framebuffer);
+                }
+            }
+        }
 
         uniforms.model_matrix = ship.get_model_matrix();
         uniforms.is_star = false;
