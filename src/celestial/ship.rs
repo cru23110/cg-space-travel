@@ -1,5 +1,7 @@
 use crate::geometry::{Mesh, load_obj};
+use crate::camera::Camera;
 use nalgebra_glm::{Vec3, Mat4};
+use std::f32::consts::PI;
 
 pub struct Ship {
     pub mesh: Mesh,
@@ -11,13 +13,31 @@ pub struct Ship {
 impl Ship {
     pub fn new(obj_path: &str) -> Result<Self, String> {
         let mesh = load_obj(obj_path)?;
-        
+
         Ok(Ship {
             mesh,
             position: Vec3::new(0.0, 0.0, 0.0),
             rotation: Vec3::new(0.0, 0.0, 0.0),
             scale: 1.0,
         })
+    }
+
+    pub fn update(&mut self, camera: &Camera) {
+        let forward = camera.forward();
+        let right = camera.right();
+        let up = Vec3::new(0.0, 1.0, 0.0);
+
+        let offset_forward = 1.5;
+        let offset_right = 0.6;
+        let offset_up = -0.4;
+
+        self.position = camera.eye
+            + forward * offset_forward
+            + right * offset_right
+            + up * offset_up;
+
+        let yaw = forward.z.atan2(forward.x);
+        self.rotation.y = yaw;
     }
 
     pub fn get_model_matrix(&self) -> Mat4 {

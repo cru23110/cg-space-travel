@@ -18,7 +18,7 @@ use framebuffer::Framebuffer;
 use camera::Camera;
 use uniforms::{Uniforms, create_viewport_matrix, create_projection_matrix, create_model_matrix};
 use pipeline::triangle_3d;
-use celestial::{Planet, PlanetShader, Star};
+use celestial::{Planet, PlanetShader, Star, Ship};
 
 const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
@@ -44,6 +44,11 @@ fn main() {
         Vec3::new(0.0, 1.0, 0.0),
     );
 
+    let mut ship = Ship::new("assets/models/ship.obj")
+        .unwrap_or_else(|e| {
+            panic!("Failed to load ship model: {}", e);
+        });
+    ship.scale = 0.01;
 
     let mut sun = Star::new(1.5, Vec3::new(0.0, 0.0, 0.0));
 
@@ -103,6 +108,8 @@ fn main() {
             planet.update(0.016);
         }
 
+        ship.update(&camera);
+
         framebuffer.clear();
 
         uniforms.model_matrix = create_model_matrix(
@@ -140,6 +147,20 @@ fn main() {
 
                     triangle_3d(v1, v2, v3, &uniforms, &mut framebuffer);
                 }
+            }
+        }
+
+        uniforms.model_matrix = ship.get_model_matrix();
+        uniforms.is_star = false;
+        uniforms.planet_shader = None;
+
+        for i in (0..ship.mesh.vertices.len()).step_by(3) {
+            if i + 2 < ship.mesh.vertices.len() {
+                let v1 = &ship.mesh.vertices[i];
+                let v2 = &ship.mesh.vertices[i + 1];
+                let v3 = &ship.mesh.vertices[i + 2];
+
+                triangle_3d(v1, v2, v3, &uniforms, &mut framebuffer);
             }
         }
 
