@@ -140,6 +140,10 @@ fn main() {
 
         obstacle_manager.update(ship.position, ship_forward, 0.016);
 
+        if elapsed.rem_euclid(5.0) < 0.016 {
+            println!("Obstacles: {}, Projectiles: {}", obstacle_manager.obstacles.len(), obstacle_manager.projectiles.len());
+        }
+
         if obstacle_manager.check_collisions(ship.position) {
             println!("Collision detected!");
         }
@@ -174,6 +178,31 @@ fn main() {
                     let v3 = &cube_mesh[i + 2];
 
                     triangle_3d(v1, v2, v3, &uniforms, &mut framebuffer);
+                }
+            }
+        }
+
+        for projectile in &obstacle_manager.projectiles {
+            let pos_4d = nalgebra_glm::vec3_to_vec4(&projectile.position);
+            let clip_pos = uniforms.projection_matrix * uniforms.view_matrix * pos_4d;
+
+            if clip_pos.w > 0.0 {
+                let ndc = clip_pos / clip_pos.w;
+
+                if ndc.x >= -1.0 && ndc.x <= 1.0 && ndc.y >= -1.0 && ndc.y <= 1.0 && ndc.z >= 0.0 && ndc.z <= 1.0 {
+                    let screen = uniforms.viewport_matrix * ndc;
+                    let x = screen.x as usize;
+                    let y = screen.y as usize;
+
+                    if x < WIDTH && y < HEIGHT {
+                        for dy in 0..20 {
+                            for dx in 0..20 {
+                                if x + dx < WIDTH && y + dy < HEIGHT {
+                                    framebuffer.point_with_depth(x + dx, y + dy, ndc.z, &projectile.color);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
