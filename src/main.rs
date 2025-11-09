@@ -18,7 +18,7 @@ use framebuffer::Framebuffer;
 use camera::Camera;
 use uniforms::{Uniforms, create_viewport_matrix, create_projection_matrix, create_model_matrix};
 use pipeline::triangle_3d;
-use celestial::{Ship, Planet, PlanetShader, Star};
+use celestial::{Planet, PlanetShader, Star};
 
 const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
@@ -48,9 +48,14 @@ fn main() {
     let mut sun = Star::new(1.5, Vec3::new(0.0, 0.0, 0.0));
 
     let mut planets = vec![
-        Planet::new(PlanetShader::Rocky, 1.0, Vec3::new(-4.0, 0.0, 0.0)),
-        Planet::new(PlanetShader::Gaseous, 1.2, Vec3::new(4.0, 0.0, 0.0)),
-        Planet::new(PlanetShader::Lava, 0.8, Vec3::new(0.0, 2.5, 0.0)),
+        Planet::new(PlanetShader::Rocky, 0.4, 4.0, 0.8),
+        Planet::new(PlanetShader::Lava, 0.6, 6.0, 0.6),
+        Planet::new(PlanetShader::Rocky, 0.7, 8.0, 0.5),
+        Planet::new(PlanetShader::Rocky, 0.5, 10.0, 0.4),
+        Planet::new(PlanetShader::Gaseous, 1.5, 14.0, 0.3),
+        Planet::new(PlanetShader::Gaseous, 1.3, 18.0, 0.25),
+        Planet::new(PlanetShader::Gaseous, 0.9, 22.0, 0.2),
+        Planet::new(PlanetShader::Gaseous, 0.85, 26.0, 0.15),
     ];  // Much smaller scale
 
     let mut uniforms = Uniforms::new();
