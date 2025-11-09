@@ -40,8 +40,8 @@ fn main() {
 
     window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
 
-    let camera = Camera::new(
-        Vec3::new(0.0, 0.0, -10.0),  // Camera moved further back
+    let mut camera = Camera::new(
+        Vec3::new(0.0, 0.0, -10.0),
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(0.0, 1.0, 0.0),
     );
@@ -71,6 +71,29 @@ fn main() {
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let elapsed = start_time.elapsed().as_secs_f32();
         uniforms.time = elapsed;
+
+        let camera_speed = 0.1;
+
+        if window.is_key_down(Key::W) {
+            camera.move_forward(camera_speed);
+        }
+        if window.is_key_down(Key::S) {
+            camera.move_forward(-camera_speed);
+        }
+        if window.is_key_down(Key::A) {
+            camera.move_right(-camera_speed);
+        }
+        if window.is_key_down(Key::D) {
+            camera.move_right(camera_speed);
+        }
+        if window.is_key_down(Key::Q) {
+            camera.move_up(camera_speed);
+        }
+        if window.is_key_down(Key::E) {
+            camera.move_up(-camera_speed);
+        }
+
+        uniforms.view_matrix = camera.get_view_matrix();
 
         ship.rotation.y = elapsed * 0.5;
         ship.rotation.x = elapsed * 0.3;
