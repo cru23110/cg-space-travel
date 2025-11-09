@@ -8,6 +8,7 @@ pub struct Ship {
     pub position: Vec3,
     pub rotation: Vec3,
     pub scale: f32,
+    pub velocity: Vec3,
 }
 
 impl Ship {
@@ -19,7 +20,16 @@ impl Ship {
             position: Vec3::new(0.0, 0.0, 0.0),
             rotation: Vec3::new(0.0, 0.0, 0.0),
             scale: 1.0,
+            velocity: Vec3::new(0.0, 0.0, 0.0),
         })
+    }
+
+    pub fn move_ship(&mut self, direction: Vec3, speed: f32) {
+        self.position += direction * speed;
+    }
+
+    pub fn set_position(&mut self, position: Vec3) {
+        self.position = position;
     }
 
     pub fn update(&mut self, camera: &Camera) {

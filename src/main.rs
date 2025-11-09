@@ -10,6 +10,7 @@ mod geometry;
 mod celestial;
 mod warp;
 mod skybox;
+mod phase_manager;
 
 use minifb::{Key, Window, WindowOptions};
 use nalgebra_glm::Vec3;
@@ -23,6 +24,7 @@ use pipeline::triangle_3d;
 use celestial::{Planet, PlanetShader, Star, Ship};
 use warp::WarpEffect;
 use skybox::Skybox;
+use phase_manager::PhaseManager;
 
 const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
@@ -52,19 +54,21 @@ fn main() {
         .unwrap_or_else(|e| {
             panic!("Failed to load ship model: {}", e);
         });
-    ship.scale = 0.01;
+    ship.scale = 0.5;
 
-    let mut sun = Star::new(1.5, Vec3::new(0.0, 0.0, 0.0));
+    let mut phase_manager = PhaseManager::new();
+
+    let mut sun = Star::new(0.8, Vec3::new(0.0, 0.0, 0.0));
 
     let mut planets = vec![
-        Planet::new(PlanetShader::Rocky, 0.4, 4.0, 0.8),
-        Planet::new(PlanetShader::Lava, 0.6, 6.0, 0.6),
-        Planet::new(PlanetShader::Rocky, 0.7, 8.0, 0.5),
-        Planet::new(PlanetShader::Rocky, 0.5, 10.0, 0.4),
-        Planet::new(PlanetShader::Gaseous, 1.5, 14.0, 0.3),
-        Planet::new(PlanetShader::Gaseous, 1.3, 18.0, 0.25),
-        Planet::new(PlanetShader::Gaseous, 0.9, 22.0, 0.2),
-        Planet::new(PlanetShader::Gaseous, 0.85, 26.0, 0.15),
+        Planet::new(PlanetShader::Rocky, 0.2, 3.0, 0.8),
+        Planet::new(PlanetShader::Lava, 0.3, 5.0, 0.6),
+        Planet::new(PlanetShader::Rocky, 0.35, 7.0, 0.5),
+        Planet::new(PlanetShader::Rocky, 0.25, 9.0, 0.4),
+        Planet::new(PlanetShader::Gaseous, 0.5, 12.0, 0.3),
+        Planet::new(PlanetShader::Gaseous, 0.45, 15.0, 0.25),
+        Planet::new(PlanetShader::Gaseous, 0.4, 18.0, 0.2),
+        Planet::new(PlanetShader::Gaseous, 0.35, 21.0, 0.15),
     ];
 
     let mut warp_effect = WarpEffect::new();
@@ -88,7 +92,7 @@ fn main() {
         let elapsed = start_time.elapsed().as_secs_f32();
         uniforms.time = elapsed;
 
-        let camera_speed = if warp_effect.active { 0.5 } else { 0.1 };
+        let ship_speed = if warp_effect.active { 0.5 } else { 0.1 };
 
         if window.is_key_down(Key::F) {
             if !f_key_was_pressed {
@@ -100,23 +104,24 @@ fn main() {
         }
 
         if window.is_key_down(Key::W) {
-            camera.move_forward(camera_speed);
+            ship.move_ship(Vec3::new(0.0, 0.0, ship_speed), 1.0);
         }
         if window.is_key_down(Key::S) {
-            camera.move_forward(-camera_speed);
+            ship.move_ship(Vec3::new(0.0, 0.0, -ship_speed), 1.0);
         }
         if window.is_key_down(Key::A) {
-            camera.move_right(-camera_speed);
+            ship.move_ship(Vec3::new(-ship_speed, 0.0, 0.0), 1.0);
         }
         if window.is_key_down(Key::D) {
-            camera.move_right(camera_speed);
+            ship.move_ship(Vec3::new(ship_speed, 0.0, 0.0), 1.0);
         }
-        if window.is_key_down(Key::Q) {
-            camera.move_up(camera_speed);
+
+        if window.is_key_down(Key::Space) {
+            phase_manager.next_phase();
         }
-        if window.is_key_down(Key::E) {
-            camera.move_up(-camera_speed);
-        }
+
+        phase_manager.update(0.016);
+        phase_manager.current_phase().setup_camera(&mut camera, ship.position);
 
         uniforms.view_matrix = camera.get_view_matrix();
 
@@ -125,8 +130,6 @@ fn main() {
         for planet in &mut planets {
             planet.update(0.016);
         }
-
-        ship.update(&camera);
 
         warp_effect.update(0.016, &camera);
 
