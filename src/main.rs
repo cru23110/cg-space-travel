@@ -103,17 +103,37 @@ fn main() {
             f_key_was_pressed = false;
         }
 
-        if window.is_key_down(Key::W) {
-            ship.move_ship(Vec3::new(0.0, 0.0, ship_speed), 1.0);
-        }
-        if window.is_key_down(Key::S) {
-            ship.move_ship(Vec3::new(0.0, 0.0, -ship_speed), 1.0);
-        }
-        if window.is_key_down(Key::A) {
-            ship.move_ship(Vec3::new(-ship_speed, 0.0, 0.0), 1.0);
-        }
-        if window.is_key_down(Key::D) {
-            ship.move_ship(Vec3::new(ship_speed, 0.0, 0.0), 1.0);
+        let current_phase = phase_manager.current_phase();
+
+        match current_phase.phase_type {
+            phase_manager::PhaseType::TopDown | phase_manager::PhaseType::TopDownShooter => {
+                if window.is_key_down(Key::W) {
+                    ship.move_ship(Vec3::new(0.0, 0.0, ship_speed), 1.0);
+                }
+                if window.is_key_down(Key::S) {
+                    ship.move_ship(Vec3::new(0.0, 0.0, -ship_speed), 1.0);
+                }
+                if window.is_key_down(Key::A) {
+                    ship.move_ship(Vec3::new(-ship_speed, 0.0, 0.0), 1.0);
+                }
+                if window.is_key_down(Key::D) {
+                    ship.move_ship(Vec3::new(ship_speed, 0.0, 0.0), 1.0);
+                }
+            },
+            phase_manager::PhaseType::Side => {
+                if window.is_key_down(Key::W) {
+                    ship.move_ship(Vec3::new(0.0, ship_speed, 0.0), 1.0);
+                }
+                if window.is_key_down(Key::S) {
+                    ship.move_ship(Vec3::new(0.0, -ship_speed, 0.0), 1.0);
+                }
+                if window.is_key_down(Key::A) {
+                    ship.move_ship(Vec3::new(-ship_speed, 0.0, 0.0), 1.0);
+                }
+                if window.is_key_down(Key::D) {
+                    ship.move_ship(Vec3::new(ship_speed, 0.0, 0.0), 1.0);
+                }
+            }
         }
 
         if window.is_key_down(Key::Space) {
