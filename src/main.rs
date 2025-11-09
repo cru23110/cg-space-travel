@@ -19,9 +19,9 @@ use std::f32::consts::PI;
 
 use framebuffer::Framebuffer;
 use camera::Camera;
-use uniforms::{Uniforms, create_viewport_matrix, create_projection_matrix, create_model_matrix};
+use uniforms::{Uniforms, create_viewport_matrix, create_projection_matrix};
 use pipeline::triangle_3d;
-use celestial::{Planet, PlanetShader, Star, Ship};
+use celestial::Ship;
 use warp::WarpEffect;
 use skybox::Skybox;
 use phase_manager::PhaseManager;
@@ -54,22 +54,9 @@ fn main() {
         .unwrap_or_else(|e| {
             panic!("Failed to load ship model: {}", e);
         });
-    ship.scale = 0.5;
+    ship.scale = 0.08;
 
     let mut phase_manager = PhaseManager::new();
-
-    let mut sun = Star::new(0.8, Vec3::new(0.0, 0.0, 0.0));
-
-    let mut planets = vec![
-        Planet::new(PlanetShader::Rocky, 0.2, 3.0, 0.8),
-        Planet::new(PlanetShader::Lava, 0.3, 5.0, 0.6),
-        Planet::new(PlanetShader::Rocky, 0.35, 7.0, 0.5),
-        Planet::new(PlanetShader::Rocky, 0.25, 9.0, 0.4),
-        Planet::new(PlanetShader::Gaseous, 0.5, 12.0, 0.3),
-        Planet::new(PlanetShader::Gaseous, 0.45, 15.0, 0.25),
-        Planet::new(PlanetShader::Gaseous, 0.4, 18.0, 0.2),
-        Planet::new(PlanetShader::Gaseous, 0.35, 21.0, 0.15),
-    ];
 
     let mut warp_effect = WarpEffect::new();
 
@@ -92,8 +79,6 @@ fn main() {
         let elapsed = start_time.elapsed().as_secs_f32();
         uniforms.time = elapsed;
 
-        let ship_speed = if warp_effect.active { 0.5 } else { 0.1 };
-
         if window.is_key_down(Key::F) {
             if !f_key_was_pressed {
                 warp_effect.toggle();
@@ -105,36 +90,42 @@ fn main() {
 
         let current_phase = phase_manager.current_phase();
 
+        let mut pitch_input = 0.0;
+        let mut roll_input = 0.0;
+
         match current_phase.phase_type {
             phase_manager::PhaseType::TopDown | phase_manager::PhaseType::TopDownShooter => {
                 if window.is_key_down(Key::W) {
-                    ship.move_ship(Vec3::new(0.0, 0.0, ship_speed), 1.0);
+                    pitch_input -= 1.0;
                 }
                 if window.is_key_down(Key::S) {
-                    ship.move_ship(Vec3::new(0.0, 0.0, -ship_speed), 1.0);
+                    pitch_input += 1.0;
                 }
                 if window.is_key_down(Key::A) {
-                    ship.move_ship(Vec3::new(-ship_speed, 0.0, 0.0), 1.0);
+                    roll_input -= 1.0;
                 }
                 if window.is_key_down(Key::D) {
-                    ship.move_ship(Vec3::new(ship_speed, 0.0, 0.0), 1.0);
+                    roll_input += 1.0;
                 }
             },
             phase_manager::PhaseType::Side => {
                 if window.is_key_down(Key::W) {
-                    ship.move_ship(Vec3::new(0.0, ship_speed, 0.0), 1.0);
+                    pitch_input -= 1.0;
                 }
                 if window.is_key_down(Key::S) {
-                    ship.move_ship(Vec3::new(0.0, -ship_speed, 0.0), 1.0);
+                    pitch_input += 1.0;
                 }
                 if window.is_key_down(Key::A) {
-                    ship.move_ship(Vec3::new(-ship_speed, 0.0, 0.0), 1.0);
+                    roll_input -= 1.0;
                 }
                 if window.is_key_down(Key::D) {
-                    ship.move_ship(Vec3::new(ship_speed, 0.0, 0.0), 1.0);
+                    roll_input += 1.0;
                 }
             }
         }
+
+        ship.apply_input(pitch_input, roll_input);
+        ship.update_physics(0.016);
 
         if window.is_key_down(Key::Space) {
             phase_manager.next_phase();
@@ -145,55 +136,11 @@ fn main() {
 
         uniforms.view_matrix = camera.get_view_matrix();
 
-        sun.update(0.016);
-
-        for planet in &mut planets {
-            planet.update(0.016);
-        }
-
         warp_effect.update(0.016, &camera);
 
         framebuffer.clear();
 
         skybox.render(&mut framebuffer, &uniforms);
-
-        uniforms.model_matrix = create_model_matrix(
-            sun.position,
-            1.0,
-            Vec3::new(sun.rotation, sun.rotation * 0.5, 0.0),
-        );
-        uniforms.is_star = true;
-        uniforms.planet_shader = None;
-
-        for i in (0..sun.mesh.vertices.len()).step_by(3) {
-            if i + 2 < sun.mesh.vertices.len() {
-                let v1 = &sun.mesh.vertices[i];
-                let v2 = &sun.mesh.vertices[i + 1];
-                let v3 = &sun.mesh.vertices[i + 2];
-
-                triangle_3d(v1, v2, v3, &uniforms, &mut framebuffer);
-            }
-        }
-
-        for planet in &planets {
-            uniforms.model_matrix = create_model_matrix(
-                planet.position,
-                1.0,
-                Vec3::new(planet.rotation, planet.rotation * 0.7, 0.0),
-            );
-            uniforms.is_star = false;
-            uniforms.planet_shader = Some(planet.shader_type);
-
-            for i in (0..planet.mesh.vertices.len()).step_by(3) {
-                if i + 2 < planet.mesh.vertices.len() {
-                    let v1 = &planet.mesh.vertices[i];
-                    let v2 = &planet.mesh.vertices[i + 1];
-                    let v3 = &planet.mesh.vertices[i + 2];
-
-                    triangle_3d(v1, v2, v3, &uniforms, &mut framebuffer);
-                }
-            }
-        }
 
         uniforms.model_matrix = ship.get_model_matrix();
         uniforms.is_star = false;

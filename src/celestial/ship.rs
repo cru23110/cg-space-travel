@@ -9,6 +9,13 @@ pub struct Ship {
     pub rotation: Vec3,
     pub scale: f32,
     pub velocity: Vec3,
+    pub target_rotation: Vec3,
+    pub acceleration: f32,
+    pub max_speed: f32,
+    pub rotation_speed: f32,
+    pub pitch: f32,
+    pub roll: f32,
+    pub forward_speed: f32,
 }
 
 impl Ship {
@@ -21,15 +28,38 @@ impl Ship {
             rotation: Vec3::new(0.0, 0.0, 0.0),
             scale: 1.0,
             velocity: Vec3::new(0.0, 0.0, 0.0),
+            target_rotation: Vec3::new(0.0, 0.0, 0.0),
+            acceleration: 0.03,
+            max_speed: 0.25,
+            rotation_speed: 0.08,
+            pitch: 0.0,
+            roll: 0.0,
+            forward_speed: 0.1,
         })
     }
 
-    pub fn move_ship(&mut self, direction: Vec3, speed: f32) {
-        self.position += direction * speed;
+    pub fn apply_input(&mut self, pitch_input: f32, roll_input: f32) {
+        self.pitch += pitch_input * self.rotation_speed;
+        self.roll += roll_input * self.rotation_speed;
+
+        self.pitch = self.pitch.clamp(-PI / 3.0, PI / 3.0);
+        self.roll = self.roll.clamp(-PI / 4.0, PI / 4.0);
+
+        self.pitch *= 0.95;
+        self.roll *= 0.95;
     }
 
-    pub fn set_position(&mut self, position: Vec3) {
-        self.position = position;
+    pub fn update_physics(&mut self, delta_time: f32) {
+        self.rotation.y = self.pitch;
+        self.rotation.z = self.roll;
+        self.rotation.x = -PI / 2.0;
+
+        let cos_pitch = self.pitch.cos();
+        let sin_pitch = self.pitch.sin();
+
+        let forward = Vec3::new(0.0, sin_pitch, -cos_pitch);
+
+        self.position += forward * self.forward_speed * delta_time * 60.0;
     }
 
     pub fn update(&mut self, camera: &Camera) {
