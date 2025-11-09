@@ -52,12 +52,12 @@ impl Ship {
         self.roll *= 0.95;
     }
 
-    pub fn update_physics(&mut self, delta_time: f32, warp_active: bool) {
+    pub fn update_physics(&mut self, delta_time: f32, warp_intensity: f32) {
         self.rotation.x = -PI / 2.0 + self.pitch;
         self.rotation.y = self.yaw;
         self.rotation.z = self.roll;
 
-        let speed = if warp_active { self.forward_speed * 3.0 } else { self.forward_speed };
+        let speed = self.forward_speed * (1.0 + warp_intensity * 8.0);
 
         self.position += self.get_forward_direction() * speed * delta_time * 60.0;
     }

@@ -81,7 +81,7 @@ fn main() {
 
         if window.is_key_down(Key::F) {
             if !f_key_was_pressed {
-                warp_effect.toggle();
+                warp_effect.activate();
                 f_key_was_pressed = true;
             }
         } else {
@@ -125,7 +125,11 @@ fn main() {
         }
 
         ship.apply_input(pitch_input, roll_input);
-        ship.update_physics(0.016, warp_effect.active);
+
+        let ship_forward = ship.get_forward_direction();
+        warp_effect.update(0.016, ship.position, ship_forward);
+
+        ship.update_physics(0.016, warp_effect.intensity);
 
         if window.is_key_down(Key::Space) {
             phase_manager.next_phase();
@@ -135,9 +139,6 @@ fn main() {
         phase_manager.current_phase().setup_camera(&mut camera, ship.position);
 
         uniforms.view_matrix = camera.get_view_matrix();
-
-        let ship_forward = ship.get_forward_direction();
-        warp_effect.update(0.016, ship.position, ship_forward);
 
         framebuffer.clear();
 
@@ -170,8 +171,8 @@ fn main() {
                     let y = screen.y as usize;
 
                     if x < WIDTH && y < HEIGHT {
-                        for dy in 0..8 {
-                            for dx in 0..8 {
+                        for dy in 0..16 {
+                            for dx in 0..16 {
                                 if x + dx < WIDTH && y + dy < HEIGHT {
                                     framebuffer.point_with_depth(x + dx, y + dy, ndc.z, &particle.color);
                                 }
