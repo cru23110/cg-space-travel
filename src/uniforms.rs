@@ -1,5 +1,6 @@
 use nalgebra_glm::{Mat4, Vec3};
 use crate::celestial::PlanetShader;
+use noise::Perlin;
 
 pub struct Uniforms {
     pub model_matrix: Mat4,
@@ -8,6 +9,8 @@ pub struct Uniforms {
     pub viewport_matrix: Mat4,
     pub time: f32,
     pub planet_shader: Option<PlanetShader>,
+    pub is_star: bool,
+    pub noise_generator: Perlin,
 }
 
 impl Uniforms {
@@ -19,6 +22,8 @@ impl Uniforms {
             viewport_matrix: Mat4::identity(),
             time: 0.0,
             planet_shader: None,
+            is_star: false,
+            noise_generator: Perlin::new(42),
         }
     }
 }

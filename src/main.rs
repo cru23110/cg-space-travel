@@ -18,7 +18,7 @@ use framebuffer::Framebuffer;
 use camera::Camera;
 use uniforms::{Uniforms, create_viewport_matrix, create_projection_matrix, create_model_matrix};
 use pipeline::triangle_3d;
-use celestial::{Ship, Planet, PlanetShader};
+use celestial::{Ship, Planet, PlanetShader, Star};
 
 const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
@@ -45,10 +45,12 @@ fn main() {
     );
 
 
+    let mut sun = Star::new(1.5, Vec3::new(0.0, 0.0, 0.0));
+
     let mut planets = vec![
-        Planet::new(PlanetShader::Rocky, 1.0, Vec3::new(-3.0, 0.0, 0.0)),
-        Planet::new(PlanetShader::Gaseous, 1.2, Vec3::new(0.0, 0.0, 0.0)),
-        Planet::new(PlanetShader::Lava, 0.8, Vec3::new(3.0, 0.0, 0.0)),
+        Planet::new(PlanetShader::Rocky, 1.0, Vec3::new(-4.0, 0.0, 0.0)),
+        Planet::new(PlanetShader::Gaseous, 1.2, Vec3::new(4.0, 0.0, 0.0)),
+        Planet::new(PlanetShader::Lava, 0.8, Vec3::new(0.0, 2.5, 0.0)),
     ];  // Much smaller scale
 
     let mut uniforms = Uniforms::new();
@@ -90,11 +92,31 @@ fn main() {
 
         uniforms.view_matrix = camera.get_view_matrix();
 
+        sun.update(0.016);
+
         for planet in &mut planets {
             planet.update(0.016);
         }
 
         framebuffer.clear();
+
+        uniforms.model_matrix = create_model_matrix(
+            sun.position,
+            1.0,
+            Vec3::new(sun.rotation, sun.rotation * 0.5, 0.0),
+        );
+        uniforms.is_star = true;
+        uniforms.planet_shader = None;
+
+        for i in (0..sun.mesh.vertices.len()).step_by(3) {
+            if i + 2 < sun.mesh.vertices.len() {
+                let v1 = &sun.mesh.vertices[i];
+                let v2 = &sun.mesh.vertices[i + 1];
+                let v3 = &sun.mesh.vertices[i + 2];
+
+                triangle_3d(v1, v2, v3, &uniforms, &mut framebuffer);
+            }
+        }
 
         for planet in &planets {
             uniforms.model_matrix = create_model_matrix(
@@ -102,6 +124,7 @@ fn main() {
                 1.0,
                 Vec3::new(planet.rotation, planet.rotation * 0.7, 0.0),
             );
+            uniforms.is_star = false;
             uniforms.planet_shader = Some(planet.shader_type);
 
             for i in (0..planet.mesh.vertices.len()).step_by(3) {
