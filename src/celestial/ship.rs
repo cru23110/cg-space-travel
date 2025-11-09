@@ -27,9 +27,9 @@ impl Ship {
         let right = camera.right();
         let up = Vec3::new(0.0, 1.0, 0.0);
 
-        let offset_forward = 1.5;
-        let offset_right = 0.6;
-        let offset_up = -0.4;
+        let offset_forward = 2.0;
+        let offset_right = 0.0;
+        let offset_up = -0.5;
 
         self.position = camera.eye
             + forward * offset_forward

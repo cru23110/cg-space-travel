@@ -8,6 +8,8 @@ mod camera;
 mod shaders;
 mod geometry;
 mod celestial;
+mod warp;
+mod skybox;
 
 use minifb::{Key, Window, WindowOptions};
 use nalgebra_glm::Vec3;
@@ -19,6 +21,8 @@ use camera::Camera;
 use uniforms::{Uniforms, create_viewport_matrix, create_projection_matrix, create_model_matrix};
 use pipeline::triangle_3d;
 use celestial::{Planet, PlanetShader, Star, Ship};
+use warp::WarpEffect;
+use skybox::Skybox;
 
 const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
@@ -61,7 +65,11 @@ fn main() {
         Planet::new(PlanetShader::Gaseous, 1.3, 18.0, 0.25),
         Planet::new(PlanetShader::Gaseous, 0.9, 22.0, 0.2),
         Planet::new(PlanetShader::Gaseous, 0.85, 26.0, 0.15),
-    ];  // Much smaller scale
+    ];
+
+    let mut warp_effect = WarpEffect::new();
+
+    let skybox = Skybox::new(1000);
 
     let mut uniforms = Uniforms::new();
     uniforms.projection_matrix = create_projection_matrix(
@@ -74,12 +82,22 @@ fn main() {
     uniforms.viewport_matrix = create_viewport_matrix(WIDTH as f32, HEIGHT as f32);
 
     let start_time = Instant::now();
+    let mut f_key_was_pressed = false;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let elapsed = start_time.elapsed().as_secs_f32();
         uniforms.time = elapsed;
 
-        let camera_speed = 0.1;
+        let camera_speed = if warp_effect.active { 0.5 } else { 0.1 };
+
+        if window.is_key_down(Key::F) {
+            if !f_key_was_pressed {
+                warp_effect.toggle();
+                f_key_was_pressed = true;
+            }
+        } else {
+            f_key_was_pressed = false;
+        }
 
         if window.is_key_down(Key::W) {
             camera.move_forward(camera_speed);
@@ -110,7 +128,11 @@ fn main() {
 
         ship.update(&camera);
 
+        warp_effect.update(0.016, &camera);
+
         framebuffer.clear();
+
+        skybox.render(&mut framebuffer, &uniforms);
 
         uniforms.model_matrix = create_model_matrix(
             sun.position,
@@ -161,6 +183,31 @@ fn main() {
                 let v3 = &ship.mesh.vertices[i + 2];
 
                 triangle_3d(v1, v2, v3, &uniforms, &mut framebuffer);
+            }
+        }
+
+        for particle in &warp_effect.particles {
+            let pos_4d = nalgebra_glm::vec3_to_vec4(&particle.position);
+            let clip_pos = uniforms.projection_matrix * uniforms.view_matrix * pos_4d;
+
+            if clip_pos.w > 0.0 {
+                let ndc = clip_pos / clip_pos.w;
+
+                if ndc.x >= -1.0 && ndc.x <= 1.0 && ndc.y >= -1.0 && ndc.y <= 1.0 && ndc.z >= 0.0 && ndc.z <= 1.0 {
+                    let screen = uniforms.viewport_matrix * ndc;
+                    let x = screen.x as usize;
+                    let y = screen.y as usize;
+
+                    if x < WIDTH && y < HEIGHT {
+                        for dy in 0..8 {
+                            for dx in 0..8 {
+                                if x + dx < WIDTH && y + dy < HEIGHT {
+                                    framebuffer.point_with_depth(x + dx, y + dy, ndc.z, &particle.color);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
