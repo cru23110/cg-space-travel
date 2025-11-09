@@ -43,7 +43,7 @@ impl Ship {
     pub fn apply_input(&mut self, pitch_input: f32, roll_input: f32) {
         self.pitch += pitch_input * self.rotation_speed;
         self.roll += roll_input * self.rotation_speed;
-        self.yaw -= roll_input * self.rotation_speed * 0.5;
+        self.yaw += roll_input * self.rotation_speed * 0.5;
 
         self.pitch = self.pitch.clamp(-PI / 3.0, PI / 3.0);
         self.roll = self.roll.clamp(-PI / 4.0, PI / 4.0);

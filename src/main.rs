@@ -102,10 +102,10 @@ fn main() {
                     pitch_input += 1.0;
                 }
                 if window.is_key_down(Key::A) {
-                    roll_input += 1.0;
+                    roll_input -= 1.0;
                 }
                 if window.is_key_down(Key::D) {
-                    roll_input -= 1.0;
+                    roll_input += 1.0;
                 }
             },
             phase_manager::PhaseType::Side => {
@@ -116,10 +116,10 @@ fn main() {
                     pitch_input += 1.0;
                 }
                 if window.is_key_down(Key::A) {
-                    roll_input += 1.0;
+                    roll_input -= 1.0;
                 }
                 if window.is_key_down(Key::D) {
-                    roll_input -= 1.0;
+                    roll_input += 1.0;
                 }
             }
         }
