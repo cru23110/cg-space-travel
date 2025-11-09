@@ -52,23 +52,27 @@ impl Ship {
         self.roll *= 0.95;
     }
 
-    pub fn update_physics(&mut self, delta_time: f32) {
+    pub fn update_physics(&mut self, delta_time: f32, warp_active: bool) {
         self.rotation.x = -PI / 2.0 + self.pitch;
         self.rotation.y = self.yaw;
         self.rotation.z = self.roll;
 
+        let speed = if warp_active { self.forward_speed * 3.0 } else { self.forward_speed };
+
+        self.position += self.get_forward_direction() * speed * delta_time * 60.0;
+    }
+
+    pub fn get_forward_direction(&self) -> Vec3 {
         let cos_pitch = self.pitch.cos();
         let sin_pitch = self.pitch.sin();
         let cos_yaw = self.yaw.cos();
         let sin_yaw = self.yaw.sin();
 
-        let forward = Vec3::new(
+        Vec3::new(
             sin_yaw * cos_pitch,
             sin_pitch,
             -cos_yaw * cos_pitch
-        );
-
-        self.position += forward * self.forward_speed * delta_time * 60.0;
+        )
     }
 
     pub fn update(&mut self, camera: &Camera) {

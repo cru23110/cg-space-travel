@@ -125,7 +125,7 @@ fn main() {
         }
 
         ship.apply_input(pitch_input, roll_input);
-        ship.update_physics(0.016);
+        ship.update_physics(0.016, warp_effect.active);
 
         if window.is_key_down(Key::Space) {
             phase_manager.next_phase();
@@ -136,7 +136,8 @@ fn main() {
 
         uniforms.view_matrix = camera.get_view_matrix();
 
-        warp_effect.update(0.016, &camera);
+        let ship_forward = ship.get_forward_direction();
+        warp_effect.update(0.016, ship.position, ship_forward);
 
         framebuffer.clear();
 

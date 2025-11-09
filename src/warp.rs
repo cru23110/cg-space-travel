@@ -1,4 +1,3 @@
-use crate::camera::Camera;
 use crate::color::Color;
 use nalgebra_glm::Vec3;
 use rand::Rng;
@@ -11,23 +10,22 @@ pub struct WarpParticle {
 }
 
 impl WarpParticle {
-    pub fn new(camera: &Camera) -> Self {
+    pub fn new(ship_pos: Vec3, ship_forward: Vec3) -> Self {
         let mut rng = rand::thread_rng();
 
-        let offset_x = rng.gen_range(-10.0..10.0);
-        let offset_y = rng.gen_range(-10.0..10.0);
-        let offset_z = rng.gen_range(5.0..20.0);
+        let offset_x = rng.gen_range(-0.3..0.3);
+        let offset_y = rng.gen_range(-0.3..0.3);
+        let offset_z = rng.gen_range(-0.5..0.1);
 
-        let forward = camera.forward();
-        let right = camera.right();
-        let up = Vec3::new(0.0, 1.0, 0.0);
+        let right = Vec3::new(-ship_forward.z, 0.0, ship_forward.x).normalize();
+        let up = ship_forward.cross(&right).normalize();
 
-        let position = camera.eye
-            + forward * offset_z
+        let position = ship_pos
+            + ship_forward * offset_z
             + right * offset_x
             + up * offset_y;
 
-        let velocity = -forward * 30.0;
+        let velocity = -ship_forward * 8.0;
 
         let color_choice = rng.gen_range(0..3);
         let color = match color_choice {
@@ -40,7 +38,7 @@ impl WarpParticle {
             position,
             velocity,
             color,
-            lifetime: 2.0,
+            lifetime: 1.0,
         }
     }
 
@@ -72,17 +70,17 @@ impl WarpEffect {
         }
     }
 
-    pub fn update(&mut self, delta_time: f32, camera: &Camera) {
+    pub fn update(&mut self, delta_time: f32, ship_pos: Vec3, ship_forward: Vec3) {
         if !self.active {
             return;
         }
 
         self.spawn_timer -= delta_time;
         if self.spawn_timer <= 0.0 {
-            for _ in 0..10 {
-                self.particles.push(WarpParticle::new(camera));
+            for _ in 0..20 {
+                self.particles.push(WarpParticle::new(ship_pos, ship_forward));
             }
-            self.spawn_timer = 0.03;
+            self.spawn_timer = 0.02;
         }
 
         self.particles.retain_mut(|p| {
