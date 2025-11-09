@@ -15,6 +15,7 @@ pub struct Ship {
     pub rotation_speed: f32,
     pub pitch: f32,
     pub roll: f32,
+    pub yaw: f32,
     pub forward_speed: f32,
 }
 
@@ -34,6 +35,7 @@ impl Ship {
             rotation_speed: 0.08,
             pitch: 0.0,
             roll: 0.0,
+            yaw: 0.0,
             forward_speed: 0.1,
         })
     }
@@ -41,6 +43,7 @@ impl Ship {
     pub fn apply_input(&mut self, pitch_input: f32, roll_input: f32) {
         self.pitch += pitch_input * self.rotation_speed;
         self.roll += roll_input * self.rotation_speed;
+        self.yaw -= roll_input * self.rotation_speed * 0.5;
 
         self.pitch = self.pitch.clamp(-PI / 3.0, PI / 3.0);
         self.roll = self.roll.clamp(-PI / 4.0, PI / 4.0);
@@ -50,14 +53,20 @@ impl Ship {
     }
 
     pub fn update_physics(&mut self, delta_time: f32) {
-        self.rotation.y = self.pitch;
+        self.rotation.x = -PI / 2.0 + self.pitch;
+        self.rotation.y = self.yaw;
         self.rotation.z = self.roll;
-        self.rotation.x = -PI / 2.0;
 
         let cos_pitch = self.pitch.cos();
         let sin_pitch = self.pitch.sin();
+        let cos_yaw = self.yaw.cos();
+        let sin_yaw = self.yaw.sin();
 
-        let forward = Vec3::new(0.0, sin_pitch, -cos_pitch);
+        let forward = Vec3::new(
+            sin_yaw * cos_pitch,
+            sin_pitch,
+            -cos_yaw * cos_pitch
+        );
 
         self.position += forward * self.forward_speed * delta_time * 60.0;
     }
